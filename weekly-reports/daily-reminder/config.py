@@ -25,6 +25,8 @@ SUPERVISOR_NAME_FIELD = os.environ.get("SUPERVISOR_NAME_FIELD", "姓名")
 TRAVEL_PERSON_FIELD = os.environ.get("TRAVEL_PERSON_FIELD", "发起人")
 TRAVEL_START_DATE_FIELD = os.environ.get("TRAVEL_START_DATE_FIELD", "开始日期")
 TRAVEL_END_DATE_FIELD = os.environ.get("TRAVEL_END_DATE_FIELD", "结束日期")
+TRAVEL_STATUS_FIELD = os.environ.get("TRAVEL_STATUS_FIELD", "申请状态")
+TRAVEL_STATUS_APPROVED = os.environ.get("TRAVEL_STATUS_APPROVED", "已通过")
 
 # 日报记录表单字段
 REPORT_PERSON_FIELD = os.environ.get("REPORT_PERSON_FIELD", "填报人")

@@ -91,13 +91,18 @@ def check_reminders(client):
         print("[WARN] 人员名单为空，无需检查。")
         return []
 
-    # 3. 读取出差记录，筛选"昨天在出差中"的人员
+    # 3. 读取出差记录，筛选"昨天在出差中"且"申请状态=已通过"的人员
     travel_records = client.get_all_records(travel_tid)
     traveling_persons = {}  # name -> (start_date, end_date)
 
     for rec in travel_records:
         person = _extract_text(rec.get(config.TRAVEL_PERSON_FIELD, "")).strip()
         if person not in supervisor_names:
+            continue
+
+        # 只取"已通过"的申请
+        status = _extract_text(rec.get(config.TRAVEL_STATUS_FIELD, "")).strip()
+        if status != config.TRAVEL_STATUS_APPROVED:
             continue
 
         start = _parse_date(rec.get(config.TRAVEL_START_DATE_FIELD))
