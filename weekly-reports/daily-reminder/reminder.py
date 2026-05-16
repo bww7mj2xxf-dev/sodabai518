@@ -9,8 +9,15 @@ BEIJING_TZ = timezone(timedelta(hours=8))
 
 
 def _check_date() -> date:
-    """检查日期 = 昨天（员工需在每日 24:00 前提交，次日 9:00 检查前一天）。"""
-    return datetime.now(BEIJING_TZ).date() - timedelta(days=1)
+    """检查日期：周一检查上周五，周二到周五检查前一天。
+
+    周末不运行（由 GitHub Actions cron 控制），所以不考虑周六日的情况。
+    """
+    today = datetime.now(BEIJING_TZ).date()
+    weekday = today.weekday()  # 周一=0, 周日=6
+    if weekday == 0:  # 周一 → 检查上周五
+        return today - timedelta(days=3)
+    return today - timedelta(days=1)  # 周二~周五 → 检查昨天
 
 
 def _parse_date(value):
