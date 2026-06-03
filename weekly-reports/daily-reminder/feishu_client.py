@@ -97,6 +97,31 @@ class FeishuClient:
             raise RuntimeError(f"发送消息失败: {data}")
         return data
 
+    # ---- 群信息 ----
+
+    def get_chat_info(self, chat_id):
+        """获取群聊信息，返回名称等。"""
+        url = f"{config.FEISHU_API_BASE}/im/v1/chats/{chat_id}"
+        resp = requests.get(url, headers=self._headers(), timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("code") != 0:
+            raise RuntimeError(f"获取群信息失败: {data}")
+        return data.get("data", {})
+
+    # ---- 多维表格写入 ----
+
+    def create_record(self, table_id, fields):
+        """在指定数据表中创建一条记录。fields 为 {字段名: 值} 字典。"""
+        url = f"{config.FEISHU_API_BASE}/bitable/v1/apps/{config.BITABLE_APP_TOKEN}/tables/{table_id}/records"
+        body = {"fields": fields}
+        resp = requests.post(url, headers=self._headers(), json=body, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("code") != 0:
+            raise RuntimeError(f"创建记录失败: {data}")
+        return data
+
     # ---- 辅助：获取群列表（用于查找 chat_id） ----
 
     def list_chats(self):

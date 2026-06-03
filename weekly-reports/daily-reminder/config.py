@@ -36,5 +36,10 @@ REPORT_DATE_FIELD = os.environ.get("REPORT_DATE_FIELD", "填报日期")
 # --- 目标群聊 ---
 FEISHU_CHAT_ID = os.environ["FEISHU_CHAT_ID"]
 
+# --- 回调机器人配置 ---
+FEISHU_VERIFICATION_TOKEN = os.environ.get("FEISHU_VERIFICATION_TOKEN", "yHuzpy9V6ZZGwqAOavE3gfhJGlz88lnH")
+RECORD_TABLE_NAME = os.environ.get("RECORD_TABLE_NAME", "任务登记表")
+RECORD_KEYWORDS = os.environ.get("RECORD_KEYWORDS", "记录,记录任务").split(",")
+
 # --- API 地址 ---
 FEISHU_API_BASE = "https://open.feishu.cn/open-apis"
