@@ -9,30 +9,19 @@ resources:
       region: cn-hangzhou
       functionName: hr-bot-callback
       description: "飞书回调机器人 - @记录任务到多维表格"
-      runtime: custom.debian10
+      runtime: python3.10
       code: ./
+      handler: index.handler
       memorySize: 256
       timeout: 30
       environmentVariables:
-        FEISHU_APP_ID: ${env.FEISHU_APP_ID}
-        FEISHU_APP_SECRET: ${env.FEISHU_APP_SECRET}
-        BITABLE_APP_TOKEN: ${env.BITABLE_APP_TOKEN}
+        FEISHU_APP_ID: cli_a969c16373385cce
+        FEISHU_APP_SECRET: CBjRAvbipEGxEDCrctNV7Xd1vWXPs8wO
+        BITABLE_APP_TOKEN: Mz0ubXnAdaKW84suKsLcCeeTnqf
         FEISHU_VERIFICATION_TOKEN: yHuzpy9V6ZZGwqAOavE3gfhJGlz88lnH
         RECORD_TABLE_NAME: 任务登记表
         RECORD_KEYWORDS: 记录,记录任务
-      customRuntimeConfig:
-        command:
-          - python3
-        args:
-          - "-m"
-          - "gunicorn"
-          - "callback_server:app"
-          - "-b"
-          - "0.0.0.0:9000"
-          - "-w"
-          - "1"
-          - "--timeout"
-          - "30"
+        PYTHONPATH: /code/deps
       triggers:
         - triggerName: httpTrigger
           triggerType: http
