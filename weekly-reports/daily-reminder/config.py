@@ -34,7 +34,7 @@ REPORT_CONTENT_FIELD = os.environ.get("REPORT_CONTENT_FIELD", "今日工作内�
 REPORT_DATE_FIELD = os.environ.get("REPORT_DATE_FIELD", "填报日期")
 
 # --- 目标群聊 ---
-FEISHU_CHAT_ID = os.environ["FEISHU_CHAT_ID"]
+FEISHU_CHAT_ID = os.environ.get("FEISHU_CHAT_ID", "")
 
 # --- 回调机器人配置 ---
 FEISHU_VERIFICATION_TOKEN = os.environ.get("FEISHU_VERIFICATION_TOKEN", "yHuzpy9V6ZZGwqAOavE3gfhJGlz88lnH")
