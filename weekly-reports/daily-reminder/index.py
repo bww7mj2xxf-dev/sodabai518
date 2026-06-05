@@ -3,15 +3,17 @@
 import json
 import base64
 import sys
-import threading
+import time
 import traceback
 
-# 将 deps 目录加入 Python 路径（存放 requests 等第三方包）
 sys.path.insert(0, "/code/deps")
 
 import config
 from feishu_client import FeishuClient
 from bot_handler import handle_record_message
+
+# 缓存 table_id，避免每次请求都查表
+_table_id_cache: dict[str, str] = {}
 
 
 def handler(event, context):
@@ -77,20 +79,11 @@ def _handle_callback(body: str) -> dict:
     if event_type != "im.message.receive_v1":
         return _resp(200, {"code": 0, "msg": "ok"})
 
-    # 后台线程处理业务逻辑，立即返回 200（满足飞书 3 秒 SLA）
-    thread = threading.Thread(
-        target=_process_event_thread,
-        args=(body_json,),
-        daemon=True,
-    )
-    thread.start()
-
-    return _resp(200, {"code": 0, "msg": "ok"})
-
-
-def _process_event_thread(event_data: dict):
+    # 同步处理业务逻辑（FC3 返回响应后会冻结实例，后台线程无法完成）
     try:
         client = FeishuClient()
-        handle_record_message(client, event_data)
+        handle_record_message(client, body_json)
     except Exception:
-        print(f"[ERROR] 后台处理失败:\n{traceback.format_exc()}")
+        print(f"[ERROR] 处理事件失败:\n{traceback.format_exc()}")
+
+    return _resp(200, {"code": 0, "msg": "ok"})

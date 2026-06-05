@@ -9,6 +9,10 @@ from collections import OrderedDict
 import config
 from feishu_client import FeishuClient
 
+# ---- 缓存 ----
+
+_table_id_cache: str | None = None
+
 # ---- 去重：防止飞书重试导致重复记录 ----
 
 _processed_message_ids: OrderedDict[str, float] = OrderedDict()
@@ -89,9 +93,12 @@ def handle_record_message(client: FeishuClient, event_data: dict) -> None:
         # 获取群名称
         chat_name = _get_chat_name(client, chat_id)
 
-        # 查找目标表格
-        tables = client.list_tables()
-        table_id = tables.get(config.RECORD_TABLE_NAME)
+        # 查找目标表格（使用缓存减少 API 调用）
+        global _table_id_cache
+        if _table_id_cache is None:
+            tables = client.list_tables()
+            _table_id_cache = tables.get(config.RECORD_TABLE_NAME)
+        table_id = _table_id_cache
         if not table_id:
             error_msg = f"未找到表格「{config.RECORD_TABLE_NAME}」，请检查表格是否存在。"
             print(f"[ERROR] {error_msg}")
