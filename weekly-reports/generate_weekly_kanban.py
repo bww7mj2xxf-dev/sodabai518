@@ -5,7 +5,7 @@ import sys
 import os
 import re
 import json
-sys.path.insert(0, '/Users/zhongqiongwei/Documents/trae_projects/1/weekly-reports/daily-reminder')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'daily-reminder'))
 
 from datetime import date, datetime, timezone, timedelta
 from collections import defaultdict
