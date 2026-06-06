@@ -127,23 +127,25 @@ class FeishuClient:
     # ---- 文件上传与私聊 ----
 
     def upload_file_to_im(self, file_path):
-        """上传文件到飞书 IM，返回 file_key。
-        用于后续 send_file_to_user 发送文件消息。
-        """
+        """上传文件到飞书 IM，返回 file_key。"""
         url = f"{config.FEISHU_API_BASE}/im/v1/files"
         headers = {"Authorization": self._headers()["Authorization"]}
+        file_name = os.path.basename(file_path)
         with open(file_path, "rb") as f:
             resp = requests.post(
                 url,
                 headers=headers,
-                files={"file": (os.path.basename(file_path), f, "application/octet-stream")},
-                data={"file_type": "stream"},
+                files={"file": (file_name, f, "application/octet-stream")},
+                data={
+                    "file_type": "stream",
+                    "file_name": file_name,
+                },
                 timeout=30,
             )
         resp.raise_for_status()
         data = resp.json()
         if data.get("code") != 0:
-            raise RuntimeError(f"上传文件失败: {data}")
+            raise RuntimeError(f"上传文件到IM失败: {data}")
         return data["data"]["file_key"]
 
     def send_file_to_user(self, open_id, file_key):
@@ -185,15 +187,11 @@ class FeishuClient:
     # ---- 云盘 ----
 
     def upload_to_drive(self, file_path, folder_token, title=None):
-        """上传文件到飞书云盘指定文件夹。
-        folder_token: 目标文件夹 token
-        返回 file_token
-        """
+        """上传文件到飞书云盘指定文件夹。"""
         if title is None:
             title = os.path.basename(file_path)
         url = f"{config.FEISHU_API_BASE}/drive/v1/files/upload_all"
         headers = {"Authorization": self._headers()["Authorization"]}
-        file_size = os.path.getsize(file_path)
         with open(file_path, "rb") as f:
             resp = requests.post(
                 url,
@@ -203,7 +201,6 @@ class FeishuClient:
                     "file_name": title,
                     "parent_type": "explorer",
                     "parent_node": folder_token,
-                    "size": str(file_size),
                 },
                 timeout=60,
             )
