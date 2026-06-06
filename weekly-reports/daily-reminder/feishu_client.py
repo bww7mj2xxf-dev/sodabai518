@@ -113,6 +113,46 @@ class FeishuClient:
 
     # ---- 多维表格写入 ----
 
+    def get_all_records_with_ids(self, table_id):
+        """读取某个数据表的全部记录，返回 [{record_id, fields}, ...]（自动翻页）。"""
+        records = []
+        page_token = None
+
+        while True:
+            params = {"page_size": 500}
+            if page_token:
+                params["page_token"] = page_token
+
+            url = f"{config.FEISHU_API_BASE}/bitable/v1/apps/{config.BITABLE_APP_TOKEN}/tables/{table_id}/records"
+            resp = requests.get(url, headers=self._headers(), params=params, timeout=30)
+            resp.raise_for_status()
+            data = resp.json()
+            if data.get("code") != 0:
+                raise RuntimeError(f"读取表格记录失败: {data}")
+
+            for item in data.get("data", {}).get("items", []):
+                records.append({
+                    "record_id": item["record_id"],
+                    "fields": item.get("fields", {}),
+                })
+
+            if not data.get("data", {}).get("has_more"):
+                break
+            page_token = data["data"].get("page_token")
+
+        return records
+
+    def update_record(self, table_id, record_id, fields):
+        """更新指定数据表中的一条记录。fields 为 {字段名: 值} 字典。"""
+        url = f"{config.FEISHU_API_BASE}/bitable/v1/apps/{config.BITABLE_APP_TOKEN}/tables/{table_id}/records/{record_id}"
+        body = {"fields": fields}
+        resp = requests.put(url, headers=self._headers(), json=body, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("code") != 0:
+            raise RuntimeError(f"更新记录失败: {data}")
+        return data
+
     def create_record(self, table_id, fields):
         """在指定数据表中创建一条记录。fields 为 {字段名: 值} 字典。"""
         url = f"{config.FEISHU_API_BASE}/bitable/v1/apps/{config.BITABLE_APP_TOKEN}/tables/{table_id}/records"
@@ -122,6 +162,23 @@ class FeishuClient:
         data = resp.json()
         if data.get("code") != 0:
             raise RuntimeError(f"创建记录失败: {data}")
+        return data
+
+    # ---- 单聊消息 ----
+
+    def send_text_to_user(self, open_id, text):
+        """向指定用户发送文本消息（单聊）。"""
+        url = f"{config.FEISHU_API_BASE}/im/v1/messages?receive_id_type=open_id"
+        body = {
+            "receive_id": open_id,
+            "msg_type": "text",
+            "content": json.dumps({"text": text}),
+        }
+        resp = requests.post(url, headers=self._headers(), json=body, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("code") != 0:
+            raise RuntimeError(f"发送单聊消息失败: {data}")
         return data
 
     # ---- 文件上传与私聊 ----

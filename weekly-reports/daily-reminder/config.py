@@ -39,6 +39,8 @@ FEISHU_CHAT_ID = os.environ.get("FEISHU_CHAT_ID", "")
 # --- 回调机器人配置 ---
 FEISHU_VERIFICATION_TOKEN = os.environ.get("FEISHU_VERIFICATION_TOKEN", "yHuzpy9V6ZZGwqAOavE3gfhJGlz88lnH")
 RECORD_TABLE_NAME = os.environ.get("RECORD_TABLE_NAME", "任务登记表")
+WEEKLY_REPORT_TABLE_NAME = os.environ.get("WEEKLY_REPORT_TABLE_NAME", "2026周报")
+FEISHU_USER_OPEN_ID = os.environ.get("FEISHU_USER_OPEN_ID", "")
 RECORD_KEYWORDS = os.environ.get("RECORD_KEYWORDS", "记录,记录任务").split(",")
 
 # --- API 地址 ---
