@@ -1,5 +1,7 @@
 """飞书开放平台 API 客户端。"""
 
+import json
+import os
 import time
 import requests
 import config
@@ -121,6 +123,115 @@ class FeishuClient:
         if data.get("code") != 0:
             raise RuntimeError(f"创建记录失败: {data}")
         return data
+
+    # ---- 文件上传与私聊 ----
+
+    def upload_file_to_im(self, file_path):
+        """上传文件到飞书 IM，返回 file_key。
+        用于后续 send_file_to_user 发送文件消息。
+        """
+        url = f"{config.FEISHU_API_BASE}/im/v1/files"
+        headers = {"Authorization": self._headers()["Authorization"]}
+        with open(file_path, "rb") as f:
+            resp = requests.post(
+                url,
+                headers=headers,
+                files={"file": (os.path.basename(file_path), f, "application/octet-stream")},
+                data={"file_type": "stream"},
+                timeout=30,
+            )
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("code") != 0:
+            raise RuntimeError(f"上传文件失败: {data}")
+        return data["data"]["file_key"]
+
+    def send_file_to_user(self, open_id, file_key):
+        """私发文件消息给指定用户。
+        open_id: 用户的 open_id
+        file_key: upload_file_to_im 返回的 file_key
+        """
+        url = f"{config.FEISHU_API_BASE}/im/v1/messages?receive_id_type=open_id"
+        body = {
+            "receive_id": open_id,
+            "msg_type": "file",
+            "content": json.dumps({"file_key": file_key}),
+        }
+        resp = requests.post(url, headers=self._headers(), json=body, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("code") != 0:
+            raise RuntimeError(f"发送文件消息失败: {data}")
+        return data
+
+    def send_file_to_chat(self, chat_id, file_key):
+        """发文件消息到群聊。
+        chat_id: 群聊 ID
+        file_key: upload_file_to_im 返回的 file_key
+        """
+        url = f"{config.FEISHU_API_BASE}/im/v1/messages?receive_id_type=chat_id"
+        body = {
+            "receive_id": chat_id,
+            "msg_type": "file",
+            "content": json.dumps({"file_key": file_key}),
+        }
+        resp = requests.post(url, headers=self._headers(), json=body, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("code") != 0:
+            raise RuntimeError(f"发送文件到群聊失败: {data}")
+        return data
+
+    # ---- 云盘 ----
+
+    def upload_to_drive(self, file_path, folder_token, title=None):
+        """上传文件到飞书云盘指定文件夹。
+        folder_token: 目标文件夹 token
+        返回 file_token
+        """
+        if title is None:
+            title = os.path.basename(file_path)
+        url = f"{config.FEISHU_API_BASE}/drive/v1/files/upload_all"
+        headers = {"Authorization": self._headers()["Authorization"]}
+        file_size = os.path.getsize(file_path)
+        with open(file_path, "rb") as f:
+            resp = requests.post(
+                url,
+                headers=headers,
+                files={"file": (title, f, "application/octet-stream")},
+                data={
+                    "file_name": title,
+                    "parent_type": "explorer",
+                    "parent_node": folder_token,
+                    "size": str(file_size),
+                },
+                timeout=60,
+            )
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("code") != 0:
+            raise RuntimeError(f"上传云盘失败: {data}")
+        return data.get("data", {}).get("file_token", "")
+
+    def get_user_open_id(self, email=None, mobile=None):
+        """通过邮箱或手机号查询用户 open_id。"""
+        url = f"{config.FEISHU_API_BASE}/contact/v3/users/batch_get_id"
+        body = {}
+        if email:
+            body["emails"] = [email]
+        elif mobile:
+            body["mobiles"] = [mobile]
+        else:
+            raise ValueError("需要提供 email 或 mobile")
+        resp = requests.post(url, headers=self._headers(), json=body, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get("code") != 0:
+            raise RuntimeError(f"查询用户ID失败: {data}")
+        user_list = data.get("data", {}).get("user_list", [])
+        if user_list:
+            return user_list[0].get("user_id", "")
+        return ""
 
     # ---- 辅助：获取群列表（用于查找 chat_id） ----
 

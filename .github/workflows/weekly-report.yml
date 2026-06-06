@@ -1,0 +1,30 @@
+name: Weekly Report Generator
+
+on:
+  schedule:
+    # 每周一 11:30 北京时间 = 03:30 UTC
+    - cron: '30 3 * * 1'
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Generate & Deliver Weekly Report
+        env:
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+          BITABLE_APP_TOKEN: ${{ secrets.BITABLE_APP_TOKEN }}
+          FEISHU_USER_OPEN_ID: ${{ secrets.FEISHU_USER_OPEN_ID }}
+          FEISHU_DRIVE_FOLDER_TOKEN: ${{ secrets.FEISHU_DRIVE_FOLDER_TOKEN }}
+        run: python weekly-reports/generate_weekly_kanban.py --auto --send
